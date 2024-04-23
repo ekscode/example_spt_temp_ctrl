@@ -1,0 +1,285 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_TempController" Id="{db96b702-b7bc-4646-8054-4088d46106d8}" SpecialFunc="None">
+    <Declaration><![CDATA[(*	Sample Code Disclaimer
+	All sample code provided by Beckhoff Automation LLC are for illustrative purposes only
+	and are provided “as is” and without any warranties, express or implied.
+	Actual implementations in applications will vary significantly.
+	Beckhoff Automation LLC shall have no liability for, and does not waive any rights in relation to,
+	any code samples that it provides or the use of such code samples for any purpose.
+*)
+FUNCTION_BLOCK FB_TempController EXTENDS FB_ComponentBase IMPLEMENTS I_TemperatureController
+VAR	
+	// Properties
+	_Enabled: BOOL;
+		
+	// HMI Interface
+	HMI: ST_HMI_TempController;
+	
+	// Hardware Inputs
+	//Feedback AT %I*: INT;
+	
+	// Hardware Outputs
+	CtrlOut AT %Q*: INT; // Scaled for HW Output
+
+	// General
+	fbTempCtrl: FB_TempCtrl;
+	Setpoint: LREAL;
+	Feedback: LREAL; // Scaled for HW Input
+	ResetPID: BOOL;
+	PID_Output: LREAL;
+	EnableReq: BOOL;
+	DisableReq: BOOL;
+	
+	// Simulation
+
+END_VAR
+
+VAR PERSISTENT
+	Param: ST_Param_TempController;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Folder Name="I_CyclicFB" Id="{402c4528-a9d4-4df7-b778-9d8acbd9b952}" />
+    <Method Name="CyclicLogic" Id="{59aac09c-eb5a-40d1-8622-cfdbabe00125}" FolderPath="I_CyclicFB\">
+      <Declaration><![CDATA[METHOD CyclicLogic
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Call Super
+SUPER^.CyclicLogic();
+
+IF EnableReq THEN
+	_Enabled := TRUE;
+	EnableReq := FALSE;
+ELSIF DisableReq OR Feedback >= Param.MaxTemp THEN
+	_Enabled := FALSE;	
+	DisableReq := FALSE;
+END_IF
+
+// Input Scaling
+
+// Call PID
+fbTempCtrl(
+	Enable:= _Enabled, 
+	Setpoint:= Param.Setpoint, 
+	Feedback:= Feedback, 
+	MaxTemperature:= Param.MaxTemp, 
+	Kp:= Param.Kp,
+	Tn:= Param.Tn,
+	Tv:= Param.Tv,
+	Td:= Param.Td,
+	ControlOutput=>PID_Output , 
+);
+
+// Method Calls
+CyclicLogic_Simulation();
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="CyclicLogic_Simulation" Id="{1b83de03-c34f-46f5-a1cf-33282296913a}">
+      <Declaration><![CDATA[METHOD CyclicLogic_Simulation
+VAR_INPUT
+END_VAR
+VAR
+	rLossRate: LREAL;
+	rGainRate: LREAL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Simulate Heating Element
+rLossRate := (Feedback - 20.0) * 6.0 / 300.0;
+rGainRate := BOOL_TO_LREAL(Enabled) * 0.30 * PID_Output;
+Feedback 	:= Feedback + (rGainRate - rLossRate) * fbTempCtrl.CycleTime ;
+			
+IF Feedback < 20.0 THEN
+	Feedback := 20.0;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Disable" Id="{5eb4caf0-5556-44e7-a0c5-1c57d8e1c3de}">
+      <Declaration><![CDATA[METHOD Disable
+VAR_INPUT
+END_VAR
+
+VAR
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Disable Request
+DisableReq := TRUE;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Enable" Id="{b92e3cd0-3108-4219-80f5-411cdbf276fa}">
+      <Declaration><![CDATA[METHOD Enable
+VAR_INPUT
+END_VAR
+
+VAR
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Enable Request
+EnableReq := TRUE;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="Enabled" Id="{b8f09018-b12b-4635-abd0-d38cdb030260}">
+      <Declaration><![CDATA[PROPERTY Enabled : BOOL
+]]></Declaration>
+      <Get Name="Get" Id="{3b5d6f3a-a0d7-4f4c-a078-8ea755cc895b}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[Enabled := _Enabled;
+]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="HMICommunication" Id="{1c302ab1-b834-4020-a627-a143666b2591}">
+      <Declaration><![CDATA[//! @summary Provides interlocks for HMI control and updates HMI status information for this component
+METHOD PROTECTED HMICommunication
+
+//! @description This method is called cyclically by <c>CyclicLogic()</c>]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Call Super
+SUPER^.HMICommunication();
+
+Param := HMI.Config.Param;
+
+// Manual Controls
+IF HMI.Command.Manual THEN
+	IF _Enabled THEN
+		IF HMI.Command.Stop THEN
+			Disable();
+		END_IF
+	ELSE
+		IF HMI.Command.Start THEN
+			Enable();
+		END_IF
+	END_IF	
+END_IF
+
+// Status Update
+HMI.Status.Enabled := _Enabled;
+HMI.Status.CtrlOutput := PID_Output;
+HMI.Status.Actual := Feedback;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Initialize" Id="{f4d753b0-7e6a-4d59-982b-9345b48fe1ac}">
+      <Declaration><![CDATA[//! @summary Basic component initialization logic
+METHOD PROTECTED Initialize : BOOL;
+
+//! @description This method is called by <c>CyclicLogic()</c> as required]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF fbTempCtrl.CycleTime = 0.0 THEN
+	fbTempCtrl.CycleTime := F_TaskTime();
+END_IF
+
+HMI.Config.Param := Param;
+
+//Call base class Initialize
+Initialize := SUPER^.Initialize();
+
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Manual" Id="{cb54f4dc-e6ba-4ae2-92e6-f21eecf7bd48}">
+      <Declaration><![CDATA[METHOD Manual
+VAR_INPUT
+	ManualMode: bool;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[HMI.Command.Manual := ManualMode;]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_TempController">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TempController.CyclicLogic">
+      <LineId Id="50" Count="1" />
+      <LineId Id="49" Count="0" />
+      <LineId Id="23" Count="0" />
+      <LineId Id="25" Count="0" />
+      <LineId Id="59" Count="0" />
+      <LineId Id="27" Count="0" />
+      <LineId Id="29" Count="0" />
+      <LineId Id="60" Count="0" />
+      <LineId Id="26" Count="0" />
+      <LineId Id="52" Count="0" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="37" Count="0" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="70" Count="1" />
+      <LineId Id="73" Count="2" />
+      <LineId Id="82" Count="3" />
+      <LineId Id="81" Count="0" />
+      <LineId Id="69" Count="0" />
+      <LineId Id="35" Count="0" />
+      <LineId Id="34" Count="0" />
+      <LineId Id="36" Count="0" />
+      <LineId Id="46" Count="0" />
+      <LineId Id="48" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TempController.CyclicLogic_Simulation">
+      <LineId Id="11" Count="0" />
+      <LineId Id="23" Count="0" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="7" Count="3" />
+    </LineIds>
+    <LineIds Name="FB_TempController.Disable">
+      <LineId Id="13" Count="0" />
+      <LineId Id="5" Count="1" />
+    </LineIds>
+    <LineIds Name="FB_TempController.Enable">
+      <LineId Id="13" Count="0" />
+      <LineId Id="5" Count="1" />
+    </LineIds>
+    <LineIds Name="FB_TempController.Enabled.Get">
+      <LineId Id="2" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TempController.HMICommunication">
+      <LineId Id="23" Count="1" />
+      <LineId Id="36" Count="0" />
+      <LineId Id="35" Count="0" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="12" Count="0" />
+      <LineId Id="9" Count="1" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="16" Count="1" />
+      <LineId Id="14" Count="1" />
+      <LineId Id="8" Count="0" />
+      <LineId Id="20" Count="0" />
+      <LineId Id="19" Count="0" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="26" Count="0" />
+      <LineId Id="29" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TempController.Initialize">
+      <LineId Id="7" Count="0" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="26" Count="0" />
+      <LineId Id="25" Count="0" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="15" Count="1" />
+      <LineId Id="5" Count="1" />
+    </LineIds>
+    <LineIds Name="FB_TempController.Manual">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="F_TaskTime" Id="{e160ef32-e869-43f3-a2ef-475d189fa31e}" SpecialFunc="None">
+    <Declaration><![CDATA[(*	Sample Code Disclaimer
+	All sample code provided by Beckhoff Automation LLC are for illustrative purposes only
+	and are provided “as is” and without any warranties, express or implied.
+	Actual implementations in applications will vary significantly.
+	Beckhoff Automation LLC shall have no liability for, and does not waive any rights in relation to,
+	any code samples that it provides or the use of such code samples for any purpose.
+*)
+FUNCTION F_TaskTime : LREAL
+VAR
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// Get Current Task Scan Time and convert to seconds
+F_TaskTime := UDINT_TO_LREAL(_TaskInfo[GETCURTASKINDEXEX()].CycleTime) / 10000000.0;]]></ST>
+    </Implementation>
+    <LineIds Name="F_TaskTime">
+      <LineId Id="11" Count="0" />
+      <LineId Id="7" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

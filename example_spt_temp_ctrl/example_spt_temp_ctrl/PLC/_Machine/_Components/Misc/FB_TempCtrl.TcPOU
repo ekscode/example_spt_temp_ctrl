@@ -1,0 +1,99 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_TempCtrl" Id="{ed01cb33-00ca-424a-9708-417f82d0ab96}" SpecialFunc="None">
+    <Declaration><![CDATA[(*	Sample Code Disclaimer
+	All sample code provided by Beckhoff Automation LLC are for illustrative purposes only
+	and are provided “as is” and without any warranties, express or implied.
+	Actual implementations in applications will vary significantly.
+	Beckhoff Automation LLC shall have no liability for, and does not waive any rights in relation to,
+	any code samples that it provides or the use of such code samples for any purpose.
+*)
+FUNCTION_BLOCK FB_TempCtrl
+VAR_INPUT
+	Enable: BOOL;         // Enable input for the controller
+	CycleTime: LREAL;     // Time between controller calculations
+	Setpoint: LREAL;      // Desired temperature setpoint
+	Feedback: LREAL;      // Current temperature feedback
+	MaxTemperature: LREAL; // Maximum allowable temperature
+	Kp: LREAL;            // Proportional gain
+	Tn: LREAL;            // Integral time constant
+	Tv: LREAL;            // Derivative time constant
+	Td: LREAL;            // Derivative time delay
+END_VAR
+VAR_OUTPUT
+	Enabled: BOOL;        // Output indicating if the controller is enabled
+	ControlOutput: LREAL;  // Control output between 0-100%
+
+END_VAR
+
+VAR
+	Integral: LREAL := 0.0;
+	Proportional: LREAL;
+	Derivative: LREAL;
+	FeedBackError: LREAL;     // Error between setpoint and feedback
+	PrevError: LREAL := 0.0; // Previous error value for derivative calculation
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[    // Check if the controller is enabled
+    IF Enable THEN
+        // Calculate the error
+        FeedBackError := Setpoint - Feedback;
+        
+        // Proportional term
+        Proportional := Kp * FeedBackError;
+        
+        // Integral term with anti-reset windup
+		IF Tn > 0.0 THEN
+			Integral := Integral + (Kp / Tn) * FeedBackError * CycleTime;
+		ELSE
+			Integral := 0.0; 
+		END_IF
+        
+        IF Integral > MaxTemperature THEN
+            Integral := MaxTemperature; // Anti-reset windup
+        ELSIF Integral < 0.0 THEN
+            Integral := 0.0; // Anti-reset windup
+        END_IF
+
+        // Derivative term
+        Derivative := -Kp * Tv * (FeedBackError - PrevError) / (Td + CycleTime);
+        
+        // Calculate control output
+        ControlOutput := Proportional + Integral + Derivative;
+        
+        // Clamp control output to the range [0, 100]
+        IF ControlOutput > 100.0 THEN
+            ControlOutput := 100.0;
+        ELSIF ControlOutput < 0.0 THEN
+            ControlOutput := 0.0;
+        END_IF
+        
+        // Update previous error for next iteration
+        PrevError := FeedBackError;
+        
+        // Set the Enabled output to TRUE
+        Enabled := TRUE;
+        
+    ELSE
+        // If the controller is disabled, set outputs to default values
+        ControlOutput := 0.0;
+        Integral := 0.0;
+        PrevError := 0.0;
+        
+        // Set the Enabled output to FALSE
+        Enabled := FALSE;
+    END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="FB_TempCtrl">
+      <LineId Id="30" Count="8" />
+      <LineId Id="100" Count="0" />
+      <LineId Id="104" Count="0" />
+      <LineId Id="101" Count="0" />
+      <LineId Id="103" Count="0" />
+      <LineId Id="102" Count="0" />
+      <LineId Id="39" Count="5" />
+      <LineId Id="46" Count="28" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

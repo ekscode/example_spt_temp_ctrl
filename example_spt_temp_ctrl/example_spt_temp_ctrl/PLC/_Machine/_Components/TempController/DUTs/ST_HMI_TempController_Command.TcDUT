@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="ST_HMI_TempController_Command" Id="{502890ec-be8d-4f00-bc1a-eabd084bb60c}">
+    <Declaration><![CDATA[TYPE ST_HMI_TempController_Command :
+STRUCT
+	Manual: BOOL := TRUE;
+	Start: BOOL;
+	Stop: BOOL;
+	ResetPID: BOOL;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

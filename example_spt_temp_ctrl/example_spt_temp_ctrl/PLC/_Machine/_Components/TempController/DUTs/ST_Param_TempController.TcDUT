@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="ST_Param_TempController" Id="{2c773067-a4a2-4793-8f14-e4cec25dc4b9}">
+    <Declaration><![CDATA[TYPE ST_Param_TempController :
+STRUCT
+	MaxTemp: LREAL := 350.0;
+	Setpoint: LREAL := 20.0;
+	Range: LREAL := 10.0;
+	Kp: LREAL := 1.0;
+	Tn: LREAL := 0.005;
+	Tv: LREAL := 0.0;
+	Td: LREAL := 0.0;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

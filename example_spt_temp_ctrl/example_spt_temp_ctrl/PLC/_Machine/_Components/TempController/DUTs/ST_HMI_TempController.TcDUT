@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="ST_HMI_TempController" Id="{8125bc75-c436-413c-aa41-f8f27512f39d}">
+    <Declaration><![CDATA[TYPE ST_HMI_TempController :
+STRUCT
+	Command: ST_HMI_TempController_Command;
+	Config: ST_HMI_TempController_Config;
+	Status: ST_HMI_TempController_Status;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

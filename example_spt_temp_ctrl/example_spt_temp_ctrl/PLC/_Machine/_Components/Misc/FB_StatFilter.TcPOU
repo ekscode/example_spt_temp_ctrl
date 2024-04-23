@@ -1,0 +1,312 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_StatFilter" Id="{4791098f-a430-4bbf-9d9f-5cbd2bc3f380}" SpecialFunc="None">
+    <Declaration><![CDATA[(*	Sample Code Disclaimer
+	All sample code provided by Beckhoff Automation LLC are for illustrative purposes only
+	and are provided “as is” and without any warranties, express or implied.
+	Actual implementations in applications will vary significantly.
+	Beckhoff Automation LLC shall have no liability for, and does not waive any rights in relation to,
+	any code samples that it provides or the use of such code samples for any purpose.
+*)
+FUNCTION_BLOCK FB_StatFilter
+VAR
+	// Properties
+	_Weight: UDINT := 1;
+	_Count: UDINT;
+	_Valid: BOOL;
+	_LastValue: LREAL;
+	_Minimum: LREAL;
+	_Maximum: LREAL;
+	_Avg: LREAL;
+	_RMS: LREAL;
+	_StdDev: LREAL;
+	_StdErr: LREAL;
+	
+	rCount: LREAL;
+	nIter: INT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+
+
+
+
+
+
+
+]]></ST>
+    </Implementation>
+    <Folder Name="Stats" Id="{6fbbf7dc-3719-4b86-ba7f-437abc40b4a5}" />
+    <Property Name="Avg" Id="{fb37e223-f2a4-4f05-9986-a7d28bcc5cc8}" FolderPath="Stats\">
+      <Declaration><![CDATA[PROPERTY Avg : LREAL]]></Declaration>
+      <Get Name="Get" Id="{0b945e35-b92e-4905-ae00-e098ba6e961a}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[Avg := _Avg;
+]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="Count" Id="{85298f51-76c4-48a0-aebf-2f4cfe248839}" FolderPath="Stats\">
+      <Declaration><![CDATA[PROPERTY Count : UDINT]]></Declaration>
+      <Get Name="Get" Id="{ee6a97ac-18bd-4a48-93d2-f9649805396e}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[Count := _Count;
+
+]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="LastValue" Id="{018bd168-0c5b-42d4-a40f-29316ea66338}" FolderPath="Stats\">
+      <Declaration><![CDATA[PROPERTY LastValue : LREAL]]></Declaration>
+      <Get Name="Get" Id="{047b034b-a5f9-40d4-861b-9de89b617700}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[LastValue := _LastValue;
+]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="Maximum" Id="{56a92ace-ecfa-4fa0-a6b7-b896b937cc16}" FolderPath="Stats\">
+      <Declaration><![CDATA[PROPERTY Maximum : LREAL]]></Declaration>
+      <Get Name="Get" Id="{94a7c02d-3da3-42a0-b9ba-c1df9efc541b}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[Maximum := _Maximum;
+]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="Minimum" Id="{bab6c03d-18ac-4803-ad7a-12e2974edc21}" FolderPath="Stats\">
+      <Declaration><![CDATA[PROPERTY Minimum : LREAL]]></Declaration>
+      <Get Name="Get" Id="{1832b3ef-a367-4d0b-a055-852f21715bd1}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[Minimum := _Minimum;
+]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="Reset" Id="{bf223b2b-781e-4bbe-b9bb-71ba57174884}">
+      <Declaration><![CDATA[METHOD Reset : BOOL
+VAR_INPUT
+END_VAR
+
+VAR
+	
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Reset Stats
+_Valid := FALSE;
+_Count := 0;
+_Minimum := 0;
+_Maximum := 0;
+_Avg := 0.0;
+_StdDev := 0.0;
+_StdErr := 0.0;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="RMS" Id="{c8848003-4a0c-43ca-9dc0-2dab88c47fc5}" FolderPath="Stats\">
+      <Declaration><![CDATA[PROPERTY RMS : LREAL]]></Declaration>
+      <Get Name="Get" Id="{6771b0ea-1568-4291-9a26-04694dc6bc62}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[RMS := _RMS;
+]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="Sample" Id="{49850910-1ea1-442a-b5dd-8a3c132e652a}">
+      <Declaration><![CDATA[METHOD Sample : BOOL
+VAR_INPUT
+	Value: lreal;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_Count := _Count +1;
+IF _Count < _Weight OR _Weight = 0 THEN
+	rCount := UDINT_TO_REAL(_Count);
+ELSE
+	_Valid := TRUE;
+	rCount := UDINT_TO_REAL(_Weight);
+END_IF
+
+IF rCount > 0.0 THEN
+	IF rCount = 1 OR Value < _Minimum THEN
+		_Minimum := Value;
+	END_IF
+	
+	IF rCount = 1 OR Value > _Maximum THEN
+		_Maximum := Value;
+	END_IF
+	
+	_Avg := (Value + _Avg * (rCount-1.0))/ rCount;
+	_RMS := SQRT(  ( EXPT(Value,2)        + (rCount-1.0)*EXPT(_RMS,2)    ) / rCount  );
+	_StdDev := SQRT(  ( EXPT(Value-_Avg,2) + (rCount-1.0)*EXPT(_StdDev,2) ) / rCount );
+	_StdErr := _StdDev/ SQRT(rCount);
+
+END_IF
+
+_LastValue := Value;]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="StdDev" Id="{e074620f-958d-4b05-b7d5-b0e6e54f284f}" FolderPath="Stats\">
+      <Declaration><![CDATA[PROPERTY StdDev : LREAL]]></Declaration>
+      <Get Name="Get" Id="{0c7b7579-7558-4b84-aa7b-e449e6f1b293}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[StdDev := _StdDev;
+]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="StdErr" Id="{a3e03c77-e759-4f05-adc9-7b8ce5ba4fd6}" FolderPath="Stats\">
+      <Declaration><![CDATA[PROPERTY StdErr : LREAL]]></Declaration>
+      <Get Name="Get" Id="{91f611f8-8ac5-41be-a8fc-84c4483cff11}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[StdErr := _StdErr;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="Valid" Id="{b6d3a36a-91f4-43dd-99d1-f489ba898092}" FolderPath="Stats\">
+      <Declaration><![CDATA[PROPERTY Valid : BOOL]]></Declaration>
+      <Get Name="Get" Id="{3cb5d41e-d5fa-4074-9622-af1b5b30cf2f}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[Valid := _Valid;
+]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="Weight" Id="{87e93b5d-c7b3-4969-87e7-f4e4e959fe2c}">
+      <Declaration><![CDATA[PROPERTY Weight : UDINT]]></Declaration>
+      <Get Name="Get" Id="{ebf50421-f94d-42b1-a91f-c7159b85490f}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[Weight := _Weight;
+]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{90d08384-4c78-4436-a070-134e6e7bcf64}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[IF Weight <> _Weight THEN
+	_Valid := FALSE;
+	_Count := 0;
+	_Minimum := 0;
+	_Maximum := 0;
+	_Avg := 0.0;
+	_StdDev := 0.0;
+	_StdErr := 0.0;
+END_IF
+
+_Weight := Weight;
+]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
+    <LineIds Name="FB_StatFilter">
+      <LineId Id="159" Count="0" />
+      <LineId Id="197" Count="0" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="82" Count="0" />
+      <LineId Id="77" Count="0" />
+      <LineId Id="76" Count="0" />
+      <LineId Id="78" Count="0" />
+      <LineId Id="63" Count="0" />
+      <LineId Id="70" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_StatFilter.Avg.Get">
+      <LineId Id="2" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_StatFilter.Count.Get">
+      <LineId Id="2" Count="0" />
+      <LineId Id="6" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_StatFilter.LastValue.Get">
+      <LineId Id="2" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_StatFilter.Maximum.Get">
+      <LineId Id="2" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_StatFilter.Minimum.Get">
+      <LineId Id="2" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_StatFilter.Reset">
+      <LineId Id="16" Count="0" />
+      <LineId Id="10" Count="5" />
+      <LineId Id="5" Count="1" />
+    </LineIds>
+    <LineIds Name="FB_StatFilter.RMS.Get">
+      <LineId Id="2" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_StatFilter.Sample">
+      <LineId Id="38" Count="0" />
+      <LineId Id="8" Count="0" />
+      <LineId Id="37" Count="0" />
+      <LineId Id="10" Count="1" />
+      <LineId Id="36" Count="0" />
+      <LineId Id="12" Count="0" />
+      <LineId Id="15" Count="14" />
+      <LineId Id="6" Count="0" />
+      <LineId Id="31" Count="0" />
+      <LineId Id="30" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_StatFilter.StdDev.Get">
+      <LineId Id="2" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_StatFilter.StdErr.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_StatFilter.Valid.Get">
+      <LineId Id="2" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_StatFilter.Weight.Get">
+      <LineId Id="2" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_StatFilter.Weight.Set">
+      <LineId Id="5" Count="0" />
+      <LineId Id="7" Count="5" />
+      <LineId Id="2" Count="0" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="16" Count="0" />
+      <LineId Id="15" Count="0" />
+      <LineId Id="14" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="ST_HMI_Machine_Status" Id="{a1ee8c19-ba47-48c1-b4c6-0f1763a29ecc}">
+    <Declaration><![CDATA[TYPE ST_HMI_Machine_Status :
+STRUCT
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

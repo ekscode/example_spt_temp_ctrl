@@ -1,0 +1,58 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="MAIN" Id="{45fee981-a966-4811-959d-34a789337a55}" SpecialFunc="None">
+    <Declaration><![CDATA[(*	Sample Code Disclaimer
+	All sample code provided by Beckhoff Automation LLC are for illustrative purposes only
+	and are provided “as is” and without any warranties, express or implied.
+	Actual implementations in applications will vary significantly.
+	Beckhoff Automation LLC shall have no liability for, and does not waive any rights in relation to,
+	any code samples that it provides or the use of such code samples for any purpose.
+*)
+PROGRAM MAIN
+VAR
+	Machine: FB_UM_Machine	:= (Name := 'Machine', LogStateChanges := TRUE);
+	Initialized: BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[CyclicLogic();]]></ST>
+    </Implementation>
+    <Method Name="CyclicLogic" Id="{fe332985-0e52-4a1e-a556-33a8822260d7}">
+      <Declaration><![CDATA[METHOD CyclicLogic : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF NOT Initialized THEN
+    Initialized := Initialize();
+    RETURN;
+END_IF
+
+Machine.CyclicLogic();
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Initialize" Id="{b3cc5d6e-29f4-4149-9705-156e78b671c1}">
+      <Declaration><![CDATA[METHOD Initialize : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[Initialize := TRUE;]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="MAIN">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="MAIN.CyclicLogic">
+      <LineId Id="6" Count="2" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="11" Count="0" />
+    </LineIds>
+    <LineIds Name="MAIN.Initialize">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

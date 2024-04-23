@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <Itf Name="I_TemperatureController" Id="{1f50ee51-fb42-4957-a83d-1c79e46aa6ed}">
+    <Declaration><![CDATA[INTERFACE I_TemperatureController
+]]></Declaration>
+    <Method Name="Disable" Id="{b27af785-35b6-43c0-aecd-e7b0cd4b653c}">
+      <Declaration><![CDATA[METHOD Disable
+VAR_INPUT
+END_VAR
+]]></Declaration>
+    </Method>
+    <Method Name="Enable" Id="{f95a2914-5bbc-43dd-8aa9-1b090a972f55}">
+      <Declaration><![CDATA[METHOD Enable
+VAR_INPUT
+END_VAR
+]]></Declaration>
+    </Method>
+    <Property Name="Enabled" Id="{f2e0889a-cfdb-4cf6-8930-1c5142d1eafe}">
+      <Declaration><![CDATA[PROPERTY Enabled : bool]]></Declaration>
+      <Get Name="Get" Id="{7316f672-1a6c-4b8c-8ac6-72b4950186b5}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+  </Itf>
+</TcPlcObject>

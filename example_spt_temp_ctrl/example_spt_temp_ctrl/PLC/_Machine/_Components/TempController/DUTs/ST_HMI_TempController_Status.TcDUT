@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="ST_HMI_TempController_Status" Id="{cf972ceb-a9fa-4d0c-ba31-b4bb590490bd}">
+    <Declaration><![CDATA[TYPE ST_HMI_TempController_Status :
+STRUCT
+	Enabled: BOOL;
+	CtrlOutput: LREAL;
+	Actual: LREAL;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>
